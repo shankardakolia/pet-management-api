@@ -21,15 +21,35 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan("dev"));
 
-// MongoDB connection (cached for Vercel)
-let isConnected;
-async function connectDB() {
-  if (isConnected) return;
-  const conn = await mongoose.connect(process.env.MONGO_URI);
-  isConnected = conn.connections[0].readyState;
-  console.log("✅ MongoDB connected");
+// ✅ Cached MongoDB connection for serverless
+let cached = global.mongoose;
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
 }
-connectDB();
+
+async function connectDB() {
+  if (cached.conn) return cached.conn;
+  if (!cached.promise) {
+    cached.promise = mongoose
+      .connect(process.env.MONGO_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      })
+      .then((mongoose) => {
+        console.log("✅ MongoDB connected");
+        return mongoose;
+      })
+      .catch((err) => {
+        console.error("❌ MongoDB connection error:", err);
+        throw err;
+      });
+  }
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
+
+// Connect once before handling routes
+await connectDB();
 
 // Routes
 app.get("/", (req, res) => res.send("🐾 Pet Management API is running"));
@@ -39,6 +59,6 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/vaccinations", vaccinationRoutes);
 app.use("/api/dewormings", dewormingRoutes);
 
-// Export handler for Vercel
+// Export for Vercel
 export default serverless(app);
 
