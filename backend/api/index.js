@@ -1,3 +1,4 @@
+// backend/api/index.js
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -5,11 +6,11 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import serverless from "serverless-http";
 
-import userRoutes from "../routes/userRoutes.js";
+import authRoutes from "../routes/auth.js";
 import petRoutes from "../routes/pets.js";
 import dashboardRoutes from "../routes/dashboard.js";
-import vaccinationRoutes from "../routes/vaccination.js";
-import dewormingRoutes from "../routes/deworming.js";
+import vaccinationRoutes from "../routes/vaccinations.js";
+import dewormingRoutes from "../routes/dewormings.js";
 
 dotenv.config();
 
@@ -26,13 +27,13 @@ async function connectDB() {
   if (isConnected) return;
   const conn = await mongoose.connect(process.env.MONGO_URI);
   isConnected = conn.connections[0].readyState;
-  console.log("MongoDB connected");
+  console.log("✅ MongoDB connected");
 }
 connectDB();
 
 // Routes
-app.get("/", (req, res) => res.send("API is running..."));
-app.use("/api/users", userRoutes);
+app.get("/", (req, res) => res.send("🐾 Pet Management API is running"));
+app.use("/api/auth", authRoutes);
 app.use("/api/pets", petRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/vaccinations", vaccinationRoutes);
