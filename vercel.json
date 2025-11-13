@@ -1,3 +1,4 @@
+# This are vercel configurations
 {
   "version": 2,
   "builds": [
