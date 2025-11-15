@@ -1,6 +1,8 @@
 import express from "express";
 import asyncHandler from "express-async-handler";
 import Pet from "../models/petModel.js";
+import Vaccination from "../models/Vaccination.js";
+import Deworming from "../models/Deworming.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -53,6 +55,30 @@ router.get(
     }));
 
     res.json(petsWithAge);
+  })
+);
+// @desc Get full pet details + vaccinations + deworming
+// @route GET /api/pets/:id/details
+// @access Private
+router.get(
+  "/:id/details",
+  protect,
+  asyncHandler(async (req, res) => {
+    const pet = await Pet.findOne({ _id: req.params.id, owner: req.user._id });
+
+    if (!pet) return res.status(404).json({ message: "Pet not found" });
+
+    const vaccinations = await Vaccination.find({ pet: req.params.id });
+    const dewormings = await Deworming.find({ pet: req.params.id });
+
+    res.json({
+      pet: {
+        ...pet.toObject(),
+        age: calculateAge(pet.dateOfBirth),
+      },
+      vaccinations,
+      dewormings,
+    });
   })
 );
 
